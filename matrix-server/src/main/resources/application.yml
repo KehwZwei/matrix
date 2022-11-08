@@ -1,0 +1,121 @@
+spring:
+  profiles:
+    active: cn
+management: 
+  server: 
+    port: 9000
+  endpoints: 
+    web: 
+      exposure: 
+        include: health,info,prometheus
+workers: 
+  kafka2Metrics: 
+  - name: NginxLog2MetricWorker
+    metric-name: nginx-access
+    workType: kafka-to-metrics
+    type: org.s3s3l.matrix.utils.worker.Kafka2MetricHubWorker
+    group: NginxLog2Metric
+    topics: 
+    - log-nginx-access
+    singleton: true
+  - name: OPGatewayLog2MetricWorker
+    metric-name: opgateway-access
+    workType: kafka-to-metrics
+    type: org.s3s3l.matrix.utils.worker.Kafka2MetricHubWorker
+    group: OPGatewayLog2Metric
+    topics: 
+    - logs-opgateway-access
+    singleton: true
+  metrics2Influxdb: 
+  - name: NginxMetric2InfluxDBWorker
+    metric-name: nginx-access
+    workType: metrics-to-influxdb
+    type: org.s3s3l.matrix.utils.worker.MetricHub2InfluxDBWorker
+    metricInterval: 10
+    measurement: nginx-access
+    singleton: true
+  - name: OPGatewayMetric2InfluxDBWorker
+    metric-name: opgateway-access
+    workType: metrics-to-influxdb
+    type: org.s3s3l.matrix.utils.worker.MetricHub2InfluxDBWorker
+    measurement: opgateway-access
+    singleton: true
+metrics: 
+  hubs: 
+  - name: nginx-access
+    prefix: message.{toObject#safe}
+    timeField: 
+      sourceFieldName: "@timestamp"
+    metrics: 
+    - name: body_size
+      valueField: 
+        sourceFieldName: Size
+        congregateType: sum
+      tagFields: 
+      - sourceFieldName: Request
+        targetFieldName: path
+        convertor: org.s3s3l.matrix.utils.convert.NginxPathConvertor
+      - sourceFieldName: Domain
+        targetFieldName: domain
+    - name: request_count
+      valueField: 
+        sourceFieldName: Requesttime
+        congregateType: count
+      tagFields: 
+      - sourceFieldName: Status
+        targetFieldName: status
+      - sourceFieldName: Request
+        targetFieldName: path
+        convertor: org.s3s3l.matrix.utils.convert.NginxPathConvertor
+      - sourceFieldName: Domain
+        targetFieldName: domain
+    - name: request_time
+      valueField: 
+        sourceFieldName: Requesttime
+        congregateType: max
+      tagFields: 
+      - sourceFieldName: Request
+        targetFieldName: path
+        convertor: org.s3s3l.matrix.utils.convert.NginxPathConvertor
+      - sourceFieldName: Domain
+        targetFieldName: domain
+    - name: upstream_res_time
+      valueField: 
+        sourceFieldName: Rpstreamtime
+        congregateType: max
+      tagFields: 
+      - sourceFieldName: Request
+        targetFieldName: path
+        convertor: org.s3s3l.matrix.utils.convert.NginxPathConvertor
+      - sourceFieldName: Domain
+        targetFieldName: domain
+  - name: opgateway-access
+    timeField: 
+      sourceFieldName: "@timestamp"
+    metrics: 
+    - name: request_count
+      valueField: 
+        sourceFieldName: processingTime
+        congregateType: count
+      tagFields: 
+      - sourceFieldName: httpStatus
+        targetFieldName: status
+      - sourceFieldName: uri
+        targetFieldName: path
+        convertor: org.s3s3l.matrix.utils.convert.BasicPathConvertor
+    - name: request_time
+      valueField: 
+        sourceFieldName: processingTime
+        congregateType: max
+      tagFields: 
+      - sourceFieldName: uri
+        targetFieldName: path
+        convertor: org.s3s3l.matrix.utils.convert.BasicPathConvertor
+    - name: queuing_time
+      valueField: 
+        sourceFieldName: queuingTime
+        congregateType: max
+      tagFields: 
+      - sourceFieldName: uri
+        targetFieldName: path
+        convertor: org.s3s3l.matrix.utils.convert.BasicPathConvertor

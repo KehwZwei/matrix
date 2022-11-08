@@ -1,0 +1,10 @@
+qiyuesuo:
+  kafka:
+    bootstrapServers: 192.168.0.79:9090,192.168.0.79:9091,192.168.0.79:9092
+  influxdb:
+    endpoint: http://192.168.0.79:8086
+    org: qiyuesuo
+    bucket: qys
+    token: NOhJJLam1i49nKJo5GpEfiaSEZ8AghjxwXdefa3r-4mwuoyGaqEBaYrtLHr1F6OsvV2LAOw3JGksvhvFORZJHA==
+  zookeeper: 
+    endPoint: 192.168.0.79:2181
